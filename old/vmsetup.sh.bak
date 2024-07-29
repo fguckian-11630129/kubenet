@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -xe
+dir=$(dirname "$0")
+
+# Grab the helpers
+source "$dir/helpers.sh"
+
+# Parse the argument
+export vmid=$1
+export vmname=$(id_to_name $vmid)
+vmdir="$dir/$vmname"
+
+# Strip the number off VM name, leaving only VM "type", i.e. gateway/control/worker
+vmtype=${vmname%%[0-9]*}
+
+# Make sure the cloud-init directory exists
+mkdir -p "$dir/cloud-init"
+mkdir -p "$vmdir"
+
+# Create user-data files for each VM type if they do not already exist
+for vmtype in gateway control worker; do
+    userdata_file="$dir/cloud-init/user-data.$vmtype"
+    cat <<EOF >"$userdata_file"
+#cloud-config
+ssh_authorized_keys:
+  - $(<~/.ssh/id_rsa.pub)
+
+packages:
+  - curl
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+EOF
+done
+# Create the network-config files for each VM type
+touch cloud-init/network-config.{gateway,control,worker}
+
+# Make sure QEMU isn't running
+# ./kill-qemu.sh
+
+# Format the disk (i think)
+qemu-img create -F qcow2 -b ../jammy-server-cloudimg-arm64.img -f qcow2 "$vmdir/disk.img" 20G
+
+# Prepare `cloud-init` config files only if they don't exist
+cat <<EOF >"$vmdir/meta-data"
+instance-id: $vmname
+local-hostname: $vmname
+EOF
+
+eval "cat << EOF
+$(<"$dir/cloud-init/user-data.$vmtype")
+EOF
+" >"$vmdir/user-data"
+
+eval "cat << EOF
+$(<"$dir/cloud-init/network-config.$vmtype")
+EOF
+" >"$vmdir/network-config"
+
+# Build the `cloud-init` ISO
+mkisofs -output "$vmdir/cidata.iso" -volid cidata -joliet -rock "$vmdir"/{user-data,meta-data,network-config}
+
+# Create tap/bridge 
+./create-tap.sh
+

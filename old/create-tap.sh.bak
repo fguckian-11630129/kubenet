@@ -1,0 +1,65 @@
+# Variables
+TAP_INTERFACE="tap0"
+BRIDGE_INTERFACE="br0"
+TAP_IP="192.168.1.1/24"
+USER=$(whoami)
+
+# Check if the TAP interface exists
+if ! ip link show "$TAP_INTERFACE" > /dev/null 2>&1; then
+    echo "Creating TAP interface $TAP_INTERFACE..."
+    sudo ip tuntap add dev "$TAP_INTERFACE" mode tap user "$USER"
+    echo "TAP interface $TAP_INTERFACE created."
+else
+    echo "TAP interface $TAP_INTERFACE already exists."
+fi
+
+# Create the bridge interface if it doesn't exist
+if ! ip link show "$BRIDGE_INTERFACE" > /dev/null 2>&1; then
+    echo "Creating bridge interface $BRIDGE_INTERFACE..."
+    sudo ip link add name "$BRIDGE_INTERFACE" type bridge
+    echo "Bridge interface $BRIDGE_INTERFACE created."
+else
+    echo "Bridge interface $BRIDGE_INTERFACE already exists."
+fi
+
+# Add TAP interface to the bridge
+if ! bridge link show | grep -q "$TAP_INTERFACE"; then
+    echo "Adding TAP interface $TAP_INTERFACE to bridge $BRIDGE_INTERFACE..."
+    sudo ip link set "$TAP_INTERFACE" master "$BRIDGE_INTERFACE"
+    echo "TAP interface $TAP_INTERFACE added to bridge $BRIDGE_INTERFACE."
+else
+    echo "TAP interface $TAP_INTERFACE is already part of bridge $BRIDGE_INTERFACE."
+fi
+
+# Bring up the TAP interface if it's not up
+if ip link show "$TAP_INTERFACE" | grep -q "state DOWN"; then
+    echo "Bringing up TAP interface $TAP_INTERFACE..."
+    sudo ip link set "$TAP_INTERFACE" up
+    echo "TAP interface $TAP_INTERFACE is up."
+else
+    echo "TAP interface $TAP_INTERFACE is already up."
+fi
+
+# Bring up the bridge interface if it's not up
+if ip link show "$BRIDGE_INTERFACE" | grep -q "state DOWN"; then
+    echo "Bringing up bridge interface $BRIDGE_INTERFACE..."
+    sudo ip link set "$BRIDGE_INTERFACE" up
+    echo "Bridge interface $BRIDGE_INTERFACE is up."
+else
+    echo "Bridge interface $BRIDGE_INTERFACE is already up."
+fi
+
+# Assign an IP address to the bridge if it doesn't have one
+if ! ip addr show "$BRIDGE_INTERFACE" | grep -q "$TAP_IP"; then
+    echo "Assigning IP address $TAP_IP to bridge interface $BRIDGE_INTERFACE..."
+    sudo ip addr add "$TAP_IP" dev "$BRIDGE_INTERFACE"
+    echo "IP address $TAP_IP assigned to bridge interface $BRIDGE_INTERFACE."
+else
+    echo "Bridge interface $BRIDGE_INTERFACE already has IP address $TAP_IP."
+fi
+
+# Restart dnsmasq to re-lease the IP addresses
+sudo systemctl restart dnsmasq
+
+# Ensure that the bridge can access the internet using the host interface
+sudo iptables -t nat -A POSTROUTING -o wlp0s20f3 -j MASQUERADE
