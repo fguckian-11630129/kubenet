@@ -66,39 +66,7 @@ assign_ip_address() {
     fi
 }
 
-# Function to add DHCP configuration to /etc/dnsmasq.conf
-function add_dhcp_configuration() {
-    local config_file="/etc/dnsmasq.conf"
 
-    # Configuration lines to add
-    local config_lines=(
-        "dhcp-range=192.168.1.2,192.168.1.20,12h"
-        "dhcp-host=52:52:52:00:00:00,192.168.1.10"
-        "dhcp-host=52:52:52:00:00:01,192.168.1.11"
-        "dhcp-host=52:52:52:00:00:02,192.168.1.12"
-        "dhcp-host=52:52:52:00:00:03,192.168.1.13"
-        "dhcp-host=52:52:52:00:00:04,192.168.1.14"
-        "dhcp-host=52:52:52:00:00:05,192.168.1.15"
-        "dhcp-host=52:52:52:00:00:06,192.168.1.16"
-        "dhcp-authoritative"
-        "domain=kubenet"
-        "expand-hosts"
-    )
-
-    # Backup the existing configuration file
-    if [[ -f "$config_file" ]]; then
-        sudo cp "$config_file" "$config_file.bak"
-    fi
-
-    # Add each configuration line if it doesn't already exist
-    for line in "${config_lines[@]}"; do
-        if ! grep -Fxq "$line" "$config_file"; then
-            echo "$line" | sudo tee -a "$config_file" > /dev/null
-        fi
-    done
-
-    echo "Configuration added to $config_file."
-}
 
 # Main script logic
 BRIDGE_INTERFACE="br0"
@@ -120,9 +88,6 @@ bring_up_interface "$BRIDGE_INTERFACE"
 
 # Assign IP address to the bridge interface
 assign_ip_address "$TAP_IP" "$BRIDGE_INTERFACE"
-
-# Assign IP addresses to the mac addresses
-add_dhcp_configuration
 
 # Restart dnsmasq to re-lease the IP addresses
 sudo systemctl restart dnsmasq

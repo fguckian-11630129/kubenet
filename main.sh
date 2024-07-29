@@ -2,10 +2,10 @@
 
 set -xe
 
-for vmid in $(seq 0 6); do 
+for vmid in $(seq 1 6); do 
   ./vmsetup.sh $vmid
 done
 
-sudo ./create-tap.sh
+# sudo ./create-tap.sh
 
-sudo ./vmlaunchall.sh kubenet-qemu
+# sudo ./vmlaunchall.sh kubenet-qemu

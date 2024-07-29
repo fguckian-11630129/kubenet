@@ -77,7 +77,7 @@ function build_cloud_init_iso() {
 # Main function to run all steps
 function main() {
   parse_arguments "$1"
-  get_vmtypejoliet
+  get_vmtype
   create_directories
   create_user_data_files
   create_network_config_files

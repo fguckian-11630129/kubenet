@@ -34,10 +34,3 @@ Append this to /etc/hosts
 192.168.1.16  worker2
 192.168.1.21  kubernetes
 
-# Show and tell
-
-Cloud init
-
-qcow2
-
-#!/usr/bin/env bash

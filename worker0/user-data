@@ -1,0 +1,9 @@
+#cloud-config
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCYg/nxX7p5RuXa3tkM98C123KWUMUUxV3FmOv9nRbxkSyVNW1xu1jgLScPQrd2ZrArT6Ojfos4vWrKARWbNLovvvu9Uuv+lDPmp1TM+X1kZKTO0Fk1JUEvlfVF1SfcxbNaPQ+C/HMTfqGI+o4Nq8eqUOeEG7B840S8qIP59CjKOXBht9NTdDyzSVj9kgGeMskHiC+Xl+q7xOV0E11xD/prGi+44Cn/KtVU0cYdz9LvLiKoRQwm/BeY6DZEKt3HE+l5HULgvLJ3ZNrUXInVKMOW8fJyoxb9RJp1biZSsGefgWBWS+cBpkNucdhxcAzDR1z0CXZHtxVp+GF38KsM+LY53Y1BNCFC7cEP5wCBd8oRx10Ea9y2s+SYbtunKZWzVAg0JKLv++Rmo4TUHQmSbylYjQu3XizIoCngdD+v46pyt1ncjLZRanx/jTB6E4bJOSkDa3D3weJT4/J/5xckIdV1zMPjRfMQ1UzgYQbOXZkGwhZV6bH1A+f3BPt0vfvqHVs= fin@fin-XPS-Ubuntu
+
+packages:
+  - curl
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
